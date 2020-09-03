@@ -43,8 +43,8 @@ class EnvEng {
         const context = this._context
         this._objects = list
             .map(item => {
-                if (item.type === 'fan') {
-                    return new Fan(context, item)
+                if (item.type === 'device') {
+                    return new Device(context, item)
                 } else {
                     throw new Error('未知的设备类型', item.type)
                 }
@@ -74,14 +74,14 @@ class EnvEng {
         }, 1000/40)
     }
     _update () {
-        console.log('update')
+        // console.log('update')
         // 更新所有对象状态
         this._objects.forEach(o => {
             o.update()
         })
     }
     _draw () {
-        console.log('draw')
+        // console.log('draw')
         const canvas = this._canvas
         const context = this._context
         context.clearRect(0, 0, canvas.width, canvas.height)
@@ -112,40 +112,27 @@ class DrawableObject {
     draw () {}
 }
 
-class Fan extends DrawableObject {
+class Device extends DrawableObject {
     constructor (context, options) {
         super(options)
-        this.options = options
         //
         this._context = context
-        this.openImgSrcs = options.openImgSrcs
-        this.closeImgSrc = options.closeImgSrc
         this.status = options.status
         this.position = options.position
         this.width = options.width
         this.height = options.height
-        this.openImgs = this.openImgSrcs.map(src => {
+        this.images = this.status.imgList.map(src => {
             const img = new Image()
             img.src = src
             return img
         })
         this.currentOpenImgIndex = 0
-        this.closeImg = new Image()
-        this.closeImg.src = this.closeImgSrc
     }
     draw () {
         const context = this._context
-        if (this.status === 'open') {
-            const img = this.openImgs[this.currentOpenImgIndex % this.openImgs.length]
-            context.drawImage(img, this.position.x , this.position.y, this.width, this.height)
-            this.currentOpenImgIndex++
-        } else if (this.status === 'close') {
-            const img = this.closeImg
-            context.drawImage(img, this.position.x , this.position.y, this.width, this.height)
-        } else {
-            throw new Error('未知的状态', this.status)
-        }
-        console.log('draw fan')
+        const img = this.images[this.currentOpenImgIndex % this.images.length]
+        context.drawImage(img, this.position.x , this.position.y, this.width, this.height)
+        this.currentOpenImgIndex++
     }
 }
 
@@ -160,63 +147,174 @@ class Pool extends DrawableObject {
 
 const ee = new EnvEng('#id-container', [
     {
-        type: 'fan',
-        status: 'open',
-        // 建立一个状态和图的对应关系, 这里就可以非常灵活适用于各种设备
-        openImgSrcs: [
-            './img/fan-open0.png',
-            './img/fan-open1.png',
-            './img/fan-open2.png',
-            './img/fan-open3.png',
-            './img/fan-open4.png',
-        ],
-        closeImgSrc: './img/fan-close.png',
-        position: { x: 100, y: 50 },
-        width: 30,
-        height: 20,
+        type: 'device',
+        status: {
+            code: '',
+            imgList: [
+                './img/pool.png',
+            ],
+        },
+        position: { x: 80, y: 15 },
+        width: 220,
+        height: 70,
     },
-])
-ee.run()
-
-// 模拟数据变化
-setTimeout(() => {
-    ee.setData([
-        {
-            type: 'fan',
-            status: 'close',
-            openImgSrcs: [
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
                 './img/fan-open0.png',
                 './img/fan-open1.png',
                 './img/fan-open2.png',
                 './img/fan-open3.png',
                 './img/fan-open4.png',
             ],
-            closeImgSrc: './img/fan-close.png',
+        },
+        position: { x: 100, y: 50 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'close',
+            imgList: [
+                './img/fan-close.png',
+            ],
+        },
+        position: { x: 180, y: 50 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'close',
+            imgList: [
+                './img/fan-close.png',
+            ],
+        },
+        position: { x: 260, y: 50 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
+                './img/pump-open.png',
+            ],
+        },
+        position: { x: 50, y: 0 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
+                './img/pool2.png',
+            ],
+        },
+        position: { x: 10, y: 70 },
+        width: 70,
+        height: 70,
+    },
+])
+ee.run()
+
+
+// 只有三种东西
+// 设备 Device: status -- imgList, currentStatus, position, width, height
+// 管道 Pipe
+// 标签 label
+
+// 模拟数据变化
+setTimeout(() => {
+    ee.setData([
+        {
+            type: 'device',
+            status: {
+                code: '',
+                imgList: [
+                    './img/pool.png',
+                ],
+            },
+            position: { x: 80, y: 15 },
+            width: 220,
+            height: 70,
+        },
+        {
+            type: 'device',
+            status: {
+                code: 'close',
+                imgList: [
+                    './img/fan-close.png',
+                ],
+            },
             position: { x: 100, y: 50 },
             width: 30,
             height: 20,
         },
-    ])
-    setTimeout(() => {
-        ee.setData([
-            {
-                type: 'fan',
-                status: 'open',
-                openImgSrcs: [
+        {
+            type: 'device',
+            status: {
+                code: 'open',
+                imgList: [
                     './img/fan-open0.png',
                     './img/fan-open1.png',
                     './img/fan-open2.png',
                     './img/fan-open3.png',
                     './img/fan-open4.png',
                 ],
-                closeImgSrc: './img/fan-close.png',
-                position: { x: 100, y: 50 },
-                width: 30,
-                height: 20,
             },
-        ])
-        // setTimeout(() => ee.destroy(), 5000)
-    }, 5000)
+            position: { x: 180, y: 50 },
+            width: 30,
+            height: 20,
+        },
+        {
+            type: 'device',
+            status: {
+                code: 'open',
+                imgList: [
+                    './img/fan-open0.png',
+                    './img/fan-open1.png',
+                    './img/fan-open2.png',
+                    './img/fan-open3.png',
+                    './img/fan-open4.png',
+                ],
+            },
+            position: { x: 260, y: 50 },
+            width: 30,
+            height: 20,
+        },
+        {
+            type: 'device',
+            status: {
+                code: 'open',
+                imgList: [
+                    './img/pump-open.png',
+                ],
+            },
+            position: { x: 50, y: 0 },
+            width: 30,
+            height: 20,
+        },
+        {
+            type: 'device',
+            status: {
+                code: 'open',
+                imgList: [
+                    './img/pool2.png',
+                ],
+            },
+            position: { x: 10, y: 70 },
+            width: 70,
+            height: 70,
+        },
+    ])
 }, 3000)
 
 </script>
