@@ -106,16 +106,8 @@ class EnvEng {
     }
 }
 
-class DrawableObject {
-    constructor (x, y) {}
-    update () {}
-    draw () {}
-}
-
-class Device extends DrawableObject {
+class Device {
     constructor (context, options) {
-        super(options)
-        //
         this._context = context
         this.status = options.status
         this.position = options.position
@@ -134,15 +126,6 @@ class Device extends DrawableObject {
         context.drawImage(img, this.position.x , this.position.y, this.width, this.height)
         this.currentOpenImgIndex++
     }
-}
-
-class Bump extends DrawableObject {
-}
-
-class Pipe extends DrawableObject {
-}
-
-class Pool extends DrawableObject {
 }
 
 const ee = new EnvEng('#id-container', [
@@ -223,6 +206,7 @@ const ee = new EnvEng('#id-container', [
         height: 70,
     },
 ])
+
 ee.run()
 
 
