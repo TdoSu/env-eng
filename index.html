@@ -24,12 +24,6 @@
 // ee.stop() -- 停止运行
 // ee.destroy() -- 销毁实例
 
-// imgObject: fan, bump
-// areaObject: pool
-// pipe -- line-pipe -- line
-// 风机 fan (图片), 泵 bump (图片), 管道 pipe (绘制), 蓄水池 pool
-// 每个对象都有一个 update, 一个 draw, 还有一些状态
-
 class EnvEng {
     constructor (containerSelector, objectList) {
         this._init(containerSelector, objectList)
@@ -45,6 +39,8 @@ class EnvEng {
             .map(item => {
                 if (item.type === 'device') {
                     return new Device(context, item)
+                } else if (item.type === 'pipe') {
+                    return new Pipe(context, item)
                 } else {
                     throw new Error('未知的设备类型', item.type)
                 }
@@ -77,7 +73,7 @@ class EnvEng {
         // console.log('update')
         // 更新所有对象状态
         this._objects.forEach(o => {
-            o.update()
+            typeof o.update === 'function' && o.update()
         })
     }
     _draw () {
@@ -106,6 +102,11 @@ class EnvEng {
     }
 }
 
+// 只有三种东西
+// 设备 Device: status -- status(可以拆成 statusList 和 currentStatus), position, width, height
+// 管道 Pipe
+// 标签 Label
+
 class Device {
     constructor (context, options) {
         this._context = context
@@ -128,7 +129,67 @@ class Device {
     }
 }
 
-const ee = new EnvEng('#id-container', [
+function drawLine(context, start, end, color, width) {
+    context.lineWidth = width
+    context.strokeStyle = color
+    context.beginPath();
+    context.moveTo(start.x, start.y);
+    context.lineTo(end.x, end.y);
+    context.stroke();
+}
+
+function drawDashLine(context, start, end, color, width, indent) {
+    context.lineWidth = width
+    context.strokeStyle = color
+    context.setLineDash([10, 5])
+    context.beginPath();
+    if (start.x === end.x) {
+        if (start.y < end.y) {
+            start.y += indent
+        } else {
+            start.y -= indent
+        }
+    } else {
+        if (start.x < end.x) {
+            start.x += indent
+        } else {
+            start.x -= indent
+        }
+    }
+    context.moveTo(start.x, start.y);
+    context.lineTo(end.x, end.y);
+    context.stroke();
+}
+
+class Pipe {
+    constructor (context, options) {
+        this.context = context
+        // [ { x, y }, { x, y } ]
+        const pointers = options.pointers
+        this.lines = []
+        for (let i = 0; i < pointers.length - 1; i++) {
+            this.lines.push({ start: pointers[i], end: pointers[i+1] })
+        }
+        // status { code, color, isFlow }
+        this.status = options.status
+        this.indent = 0
+    }
+    draw () {
+        this.lines.forEach(line => {
+            const x1 = line.start.x
+            const x2 = line.end.x
+            const y1 = line.start.y
+            const y2 = line.end.y
+            drawDashLine(this.context, { x: x1, y: y1 }, { x: x2, y: y2 }, 'rgb(255, 0, 0)', 2, this.indent)
+            // drawDashLine(this.context, { x1: 40, y: this.indent }, { x2: 40, y: 100 }, 'rgb(255, 0, 0)', 2)
+        })
+        this.indent < 15 ? this.indent++ : (this.indent = 0)
+    }
+}
+
+// *** demo ***
+
+const data1 = [
     {
         type: 'device',
         status: {
@@ -140,6 +201,26 @@ const ee = new EnvEng('#id-container', [
         position: { x: 80, y: 15 },
         width: 220,
         height: 70,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
+                './img/pool2.png',
+            ],
+        },
+        position: { x: 10, y: 70 },
+        width: 70,
+        height: 70,
+    },
+    {
+        type: 'pipe',
+        status: {
+            code: '',
+            color: '#f00',
+        },
+        pointers: [ { x: 20, y: 120 }, { x: 20, y: 10 }, { x: 100, y: 10 }, { x: 100, y: 34 } ],
     },
     {
         type: 'device',
@@ -193,6 +274,21 @@ const ee = new EnvEng('#id-container', [
         width: 30,
         height: 20,
     },
+]
+
+const data2 = [
+    {
+        type: 'device',
+        status: {
+            code: '',
+            imgList: [
+                './img/pool.png',
+            ],
+        },
+        position: { x: 80, y: 15 },
+        width: 220,
+        height: 70,
+    },
     {
         type: 'device',
         status: {
@@ -205,100 +301,78 @@ const ee = new EnvEng('#id-container', [
         width: 70,
         height: 70,
     },
-])
+    {
+        type: 'pipe',
+        status: {
+            code: '',
+            color: '#f00',
+        },
+        pointers: [ { x: 20, y: 120 }, { x: 20, y: 10 }, { x: 100, y: 10 }, { x: 100, y: 34 } ],
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'close',
+            imgList: [
+                './img/fan-close.png',
+            ],
+        },
+        position: { x: 100, y: 50 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
+                './img/fan-open0.png',
+                './img/fan-open1.png',
+                './img/fan-open2.png',
+                './img/fan-open3.png',
+                './img/fan-open4.png',
+            ],
+        },
+        position: { x: 180, y: 50 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
+                './img/fan-open0.png',
+                './img/fan-open1.png',
+                './img/fan-open2.png',
+                './img/fan-open3.png',
+                './img/fan-open4.png',
+            ],
+        },
+        position: { x: 260, y: 50 },
+        width: 30,
+        height: 20,
+    },
+    {
+        type: 'device',
+        status: {
+            code: 'open',
+            imgList: [
+                './img/pump-open.png',
+            ],
+        },
+        position: { x: 50, y: 0 },
+        width: 30,
+        height: 20,
+    },
+]
 
+const ee = new EnvEng('#id-container', data1)
 ee.run()
-
-
-// 只有三种东西
-// 设备 Device: status -- imgList, currentStatus, position, width, height
-// 管道 Pipe
-// 标签 label
 
 // 模拟数据变化
 setTimeout(() => {
-    ee.setData([
-        {
-            type: 'device',
-            status: {
-                code: '',
-                imgList: [
-                    './img/pool.png',
-                ],
-            },
-            position: { x: 80, y: 15 },
-            width: 220,
-            height: 70,
-        },
-        {
-            type: 'device',
-            status: {
-                code: 'close',
-                imgList: [
-                    './img/fan-close.png',
-                ],
-            },
-            position: { x: 100, y: 50 },
-            width: 30,
-            height: 20,
-        },
-        {
-            type: 'device',
-            status: {
-                code: 'open',
-                imgList: [
-                    './img/fan-open0.png',
-                    './img/fan-open1.png',
-                    './img/fan-open2.png',
-                    './img/fan-open3.png',
-                    './img/fan-open4.png',
-                ],
-            },
-            position: { x: 180, y: 50 },
-            width: 30,
-            height: 20,
-        },
-        {
-            type: 'device',
-            status: {
-                code: 'open',
-                imgList: [
-                    './img/fan-open0.png',
-                    './img/fan-open1.png',
-                    './img/fan-open2.png',
-                    './img/fan-open3.png',
-                    './img/fan-open4.png',
-                ],
-            },
-            position: { x: 260, y: 50 },
-            width: 30,
-            height: 20,
-        },
-        {
-            type: 'device',
-            status: {
-                code: 'open',
-                imgList: [
-                    './img/pump-open.png',
-                ],
-            },
-            position: { x: 50, y: 0 },
-            width: 30,
-            height: 20,
-        },
-        {
-            type: 'device',
-            status: {
-                code: 'open',
-                imgList: [
-                    './img/pool2.png',
-                ],
-            },
-            position: { x: 10, y: 70 },
-            width: 70,
-            height: 70,
-        },
-    ])
+    ee.setData(data2)
 }, 3000)
 
 </script>
