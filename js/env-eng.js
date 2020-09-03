@@ -9,6 +9,11 @@
 
 class EnvEng {
     constructor (containerSelector, objectList) {
+        this._type2Constructor = {
+            'device': Device,
+            'pipe': Pipe,
+            'label': Label,
+        }
         this._init(containerSelector, objectList)
     }
     _init (containerSelector, objectList) {
@@ -20,10 +25,10 @@ class EnvEng {
         const context = this._context
         this._objects = list
             .map(item => {
-                if (item.type === 'device') {
-                    return new Device(context, item)
-                } else if (item.type === 'pipe') {
-                    return new Pipe(context, item)
+                const type = item.type
+                const Constructor = this._type2Constructor[type]
+                if (Constructor) {
+                    return new Constructor(context, item)
                 } else {
                     throw new Error('未知的设备类型', item.type)
                 }
