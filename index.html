@@ -9,10 +9,43 @@
             height: 400px;
             border: 1px solid #000;
         }
+        button[open] {
+            background: #16a085;
+        }
+        button[close] {
+            background: #7f8c8d;
+        }
+        button {
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 4px 12px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
     <div id="id-container" class="container"></div>
+
+    <br>
+
+    <div id="id-buttons">
+        <button data-device="engine" close>引擎</button>
+        <button data-device="fan1" open>风机1</button>
+        <button data-device="fan2" close>风机2</button>
+        <button data-device="fan3" close>风机3</button>
+        <button data-device="pump" open>水泵1</button>
+    </div>
+
+    <br>
+
+    <div>
+        <button id="id-auto-button" style="background: #2980b9">自动化模拟</button>
+    </div>
+
+    <br>
+    蓄水池水量: <input type="text" id="id-input">
+
     <script src=js/device.js></script>
     <script src=js/pipe.js></script>
     <script src=js/label.js></script>

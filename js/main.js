@@ -11,6 +11,11 @@
  *  4. 设备支持提供标识 label, 可以使用相对位置, top, top-right, bottom
  *  5. label 支持设置文字大小, 字体, 颜色
  *  6. 管道需要设置一组节点 pointers [ { x, y } ]
+ * 
+ *  几个可以提升效果的点: 
+ *  1. 图片的清晰度和细节
+ *  2. 图片和其他图元的一致性
+ *  3. 页面布局
  */
 
 const data1 = [
@@ -63,6 +68,7 @@ const data1 = [
         status: {
             code: '',
             color: '#f00',
+            isFlow: true,
         },
         pointers: [ { x: 20, y: 120 }, { x: 20, y: 10 }, { x: 100, y: 10 }, { x: 100, y: 34 } ],
     },
@@ -331,16 +337,115 @@ const data2 = [
     },
 ]
 
+const switchDevice = element => {
+    if (element.hasAttribute('close')) {
+        element.removeAttribute('close', 0)
+        element.setAttribute('open', 0)
+        return true
+    } else {
+        element.removeAttribute('open', 0)
+        element.setAttribute('close', 0)
+        return false
+    }
+}
+
 const __main = () => {
-    // 获取一个引擎实例, 参数是: 外部容器, 初始数据
-    const ee = new EnvEng('#id-container', data1)
-    // 模拟数据变化
-    setTimeout(() => {
-        // setData 可以设置新的数据状态
-        ee.setData(data2)
-        // destroy 可以销毁引擎
-        // ee.destroy()
-    }, 3000)
+    const buttons = document.querySelector('#id-buttons')
+    const currentData = data1
+    let ee = null
+
+    // 按钮事件
+    buttons.addEventListener('click', (event) => {
+        const button = event.target
+        const device = button.dataset.device
+        const isOpen = switchDevice(button)
+        const fanStatusClose = {
+            code: 'close',
+            imgList: [
+                './img/fan-close.png',
+            ],
+        }
+        const fanStatusOpen = {
+            code: 'open',
+            imgList: [
+                './img/fan-open0.png',
+                './img/fan-open1.png',
+                './img/fan-open2.png',
+                './img/fan-open3.png',
+                './img/fan-open4.png',
+            ],
+        }
+        const pumpStatusClose = {
+            code: 'close',
+            imgList: [
+                './img/pump-close.png',
+            ],
+        }
+        const pumpStatusOpen = {
+            code: 'open',
+            imgList: [
+                './img/pump-open.png',
+            ],
+        }
+        if (device === 'engine') {
+            if (isOpen) {
+                // 获取一个引擎实例, 参数是: 外部容器, 初始数据
+                ee = new EnvEng('#id-container', currentData)
+            } else {
+                ee && ee.destroy()
+            }
+        } else if (ee) {
+            if (device === 'fan1') {
+                currentData[3].status = isOpen ? fanStatusOpen : fanStatusClose
+            } else if (device === 'fan2') {
+                currentData[4].status = isOpen ? fanStatusOpen : fanStatusClose
+            } else if (device === 'fan3') {
+                currentData[5].status = isOpen ? fanStatusOpen : fanStatusClose
+            } else if (device === 'pump') {
+                currentData[6].status = isOpen ? pumpStatusOpen : pumpStatusClose
+                currentData[2].status = isOpen ? {
+                    code: '',
+                    color: '#f00',
+                    isFlow: true,
+                } : {
+                    code: '',
+                    color: '#555',
+                    isFlow: false,
+                }
+            }
+            ee.setData(currentData)
+        }
+    })
+
+    // 自动化模拟
+    document.querySelector('#id-auto-button')
+        .addEventListener('click', () => {
+            const btns = document.querySelectorAll('button')
+            setTimeout(() => {
+                btns[2].click()
+                setTimeout(() => {
+                    btns[1].click()
+                    btns[2].click()
+                    btns[3].click()
+                }, 3000)
+            }, 3000)
+        })
+
+    // 水量
+    document.querySelector('#id-input')
+        .addEventListener('input', (event) => {
+            currentData[0].lab = {
+                type: 'label',
+                status: {
+                    code: '',
+                    text: '蓄水池' + (event.target.value ? ` 水量: ${event.target.value}` : ''),
+                },
+                font: '14px serif',
+                style: '#555',
+                relativePosition: 'bottom',
+            }
+            ee.setData(currentData)
+        })
 }
 
 __main()

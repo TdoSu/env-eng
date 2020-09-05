@@ -1,6 +1,7 @@
 function drawLine(context, start, end, color, width) {
     context.lineWidth = width
     context.strokeStyle = color
+    context.setLineDash([10, 0])
     context.beginPath();
     context.moveTo(start.x, start.y);
     context.lineTo(end.x, end.y);
@@ -49,8 +50,11 @@ class Pipe {
             const x2 = line.end.x
             const y1 = line.start.y
             const y2 = line.end.y
-            drawDashLine(this.context, { x: x1, y: y1 }, { x: x2, y: y2 }, 'rgb(255, 0, 0)', 2, this.indent)
-            // drawDashLine(this.context, { x1: 40, y: this.indent }, { x2: 40, y: 100 }, 'rgb(255, 0, 0)', 2)
+            if (this.status.isFlow) {
+                drawDashLine(this.context, { x: x1, y: y1 }, { x: x2, y: y2 }, this.status.color, 2, this.indent)
+            } else {
+                drawLine(this.context, { x: x1, y: y1 }, { x: x2, y: y2 }, this.status.color, 2)
+            }
         })
         this.indent < 15 ? this.indent++ : (this.indent = 0)
     }
